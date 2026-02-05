@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+#from django.http import HttpResponse
 
 # request — это "письмо" от браузера с данными о пользователе
 def home(request):
@@ -23,5 +23,9 @@ def home(request):
     return render(request, 'gallery/index.html', context_data)
 
 def about(request):
+    context_data = {
+    #'page_title': 'О нас',
+    }
     # Мы пока не используем HTML-шаблоны, просто вернем строку.
-    return HttpResponse("<h1>Курс Web Структуры</h1><p>Здесь мы делаем сайт типо Scetchfab.</p>")
+    #return HttpResponse("<h1>Курс Web Структуры</h1><p>Здесь мы делаем сайт типо Scetchfab.</p>")
+    return render(request, 'gallery/about.html', context_data)
