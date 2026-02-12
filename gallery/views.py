@@ -23,3 +23,9 @@ def about(request):
     # Мы пока не используем HTML-шаблоны, просто вернем строку.
     #return HttpResponse("<h1>Курс Web Структуры</h1><p>Здесь мы делаем сайт типо Scetchfab.</p>")
     return render(request, 'gallery/about.html', context_data)
+
+def upload(request):
+    context_data = {
+    'page_title': 'Страница загрузки',
+    }
+    return render(request, 'gallery/upload.html', context_data)

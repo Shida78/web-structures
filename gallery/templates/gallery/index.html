@@ -7,6 +7,7 @@
 <body>
     <header>
         <a href="/about/">О нас</a>
+        <a href="/upload/">Загрузить модель</a>
         <!-- {{ ... }} — это переменная. Мы передадим её из Python -->
         <h1>{{ page_title }}</h1>
     </header>
@@ -23,7 +24,7 @@
                     <!-- asset.file.size — размер в байтах. filter 'filesizeformat' делает его читаемым
                     (MB/KB) -->
                     <small>(Размер: {{ asset.file.size|filesizeformat }})</small>
-                    
+
                     <a href="{{ asset.file.url }}" download>[Скачать файл]</a>
                 </li>
             {% empty %}
