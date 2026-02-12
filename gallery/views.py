@@ -4,8 +4,11 @@ from .models import Asset # Импортируем модель, чтобы сп
 # request — это "письмо" от браузера с данными о пользователе
 def home(request):
    # ORM Запрос: "Дай мне все объекты Asset из базы"
-    assets = Asset.objects.all()
-    
+   # order_by('-created_at') сортирует по полю created_at.
+    # Минус (-) означает "по убыванию" (DESC).
+    assets = Asset.objects.all().order_by('-created_at')
+    #assets = Asset.objects.all()
+
     context_data = {
     'page_title': 'Главная Галерея',
     'assets': assets, # Передаем реальный QuerySet (список)
