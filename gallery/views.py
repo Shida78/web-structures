@@ -1,25 +1,16 @@
 from django.shortcuts import render
-#from django.http import HttpResponse
+from .models import Asset # Импортируем модель, чтобы спрашивать данные
 
 # request — это "письмо" от браузера с данными о пользователе
 def home(request):
-    # Имитация данных из базы (список словарей)
-    fake_database = [
-    {'id': 1, 'name': 'Sci-Fi Helmet', 'file_size': '15 MB'},
-    {'id': 2, 'name': 'Old Chair', 'file_size': '2 MB'},
-    {'id': 3, 'name': 'Cyber Truck', 'file_size': '10 MB'},
-    {'id': 4, 'name': 'Smartphone', 'file_size': '12 MB'},
-    ]
-    # Это словарь Python.
-    # Ключи словаря станут именами переменных в HTML.
+   # ORM Запрос: "Дай мне все объекты Asset из базы"
+    assets = Asset.objects.all()
+    
     context_data = {
     'page_title': 'Главная Галерея',
-    #'models_count': 0, # Попробуйте поменять на 5, чтобы проверить условие
-    'assets': fake_database, # Передаем весь список
+    'assets': assets, # Передаем реальный QuerySet (список)
     }
 
-    # 2. Рендерим (смешиваем HTML и данные)
-    # Путь указываем относительно папки templates: 'gallery/index.html'
     return render(request, 'gallery/index.html', context_data)
 
 def about(request):
