@@ -1,37 +1,65 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>3D Storage</title>
+    <link rel="stylesheet" href="{% static 'gallery/style.css' %}">
 </head>
 <body>
     <header>
-        <a href="/about/">О нас</a>
-        <!-- {{ ... }} — это переменная. Мы передадим её из Python -->
         <h1>{{ page_title }}</h1>
+        <!-- Ссылка на загрузку теперь выглядит как кнопка -->
+        <a href="{% url 'upload' %}" class="btn" style="background-color: #abf7ab;">Загрузить модель</a>
     </header>
 
     <main>
-        <p>Добро пожаловать в систему хранения.</p>
-        <h2>Доступные ассеты:</h2>
-        <!-- Цикл for в шаблоне Django -->
-        <ul>
+        <!-- Контейнер сетки -->
+        <div class="gallery-grid">
+
             {% for asset in assets %}
-                <li>
-                    <strong>{{ asset.name }}</strong>
-                    <small>(Размер: {{ asset.file_size }})</small>
-                    <!-- Ссылка-заглушка -->
-                    <a href="#">[Скачать]</a>
-                </li>
-            +
-                <!-- Этот блок сработает, если список assets пустой -->
-                <li>Нет доступных моделей.</li>
+                <!-- Карточка -->
+                <div class="asset-card">
+
+                    <!-- Добавляем ID и data-url.
+                    id="model-container-..." нужен, чтобы 3JS нашел конкретный div.
+                    data-url="..." хранит ссылку на файл, которую JS прочитает.
+                    -->
+
+                    <div class="card-preview">
+                        id="model-container-{{ asset.id }}"
+                        data-url="{{ asset.file.url }}">
+                        
+                        <!-- Временно оставим текст, пока JS не заменит его на Canvas -->
+                        �       
+                    </div>
+
+                    <!-- 2. Информация (Нижняя часть) -->
+                    <div class="card-info">
+                        <h3 class="card-title">{{ asset.title }}</h3>
+
+                        <div class="card-meta">
+                            <span>📅 {{ asset.created_at|date:"d M Y" }}</span>
+                            <!-- Если есть файл, показываем размер -->
+                            {% if asset.file %}
+                                <!--<span style="float: right;">💾 {{asset.file.size|filesizeformat }}</span> -->
+                            {% endif %}
+                        </div>
+
+                        <!-- Кнопка скачивания -->
+                        {% if asset.file %}
+                            <a href="{{ asset.file.url }}" class="btn" download>Скачать.glb</a>
+                            <span>💾 {{asset.file.size|filesizeformat }}</span>
+                        {% else %}
+                            <span style="color: red;">Файл потерян</span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <p>База пуста.</p>
             {% endfor %}
-        </ul>
-        <hr>
+
+        </div>
     </main>
-    <footer>
-        <p>&copy; 2026 Web Structures Course</p>
-    </footer>
 </body>
 </html>

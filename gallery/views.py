@@ -1,25 +1,38 @@
-from django.shortcuts import render
-#from django.http import HttpResponse
+from django.shortcuts import render, redirect # Добавляем redirect
+from .models import Asset
+from .forms import AssetForm # Импортируем нашу новую форму
+
+def upload(request):
+    if request.method == 'POST':
+        # Сценарий: Пользователь нажал "Отправить"
+        # ВАЖНО: Передаем request.FILES, иначе файл потеряется!
+        form = AssetForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            # Если все поля заполнены верно - сохраняем в БД
+            form.save()
+            # И перекидываем пользователя на главную
+            return redirect('home')
+    else:
+        # Сценарий: Пользователь просто зашел на страницу (GET)
+        form = AssetForm() # Создаем пустую форму
+
+    # Отдаем шаблон, передавая туда форму (заполненную ошибками или пустую)
+    return render(request, 'gallery/upload.html', {'form': form})
 
 # request — это "письмо" от браузера с данными о пользователе
 def home(request):
-    # Имитация данных из базы (список словарей)
-    fake_database = [
-    {'id': 1, 'name': 'Sci-Fi Helmet', 'file_size': '15 MB'},
-    {'id': 2, 'name': 'Old Chair', 'file_size': '2 MB'},
-    {'id': 3, 'name': 'Cyber Truck', 'file_size': '10 MB'},
-    {'id': 4, 'name': 'Smartphone', 'file_size': '12 MB'},
-    ]
-    # Это словарь Python.
-    # Ключи словаря станут именами переменных в HTML.
+   # ORM Запрос: "Дай мне все объекты Asset из базы"
+   # order_by('-created_at') сортирует по полю created_at.
+    # Минус (-) означает "по убыванию" (DESC).
+    assets = Asset.objects.all().order_by('-created_at')
+    #assets = Asset.objects.all()
+
     context_data = {
     'page_title': 'Главная Галерея',
-    #'models_count': 0, # Попробуйте поменять на 5, чтобы проверить условие
-    'assets': fake_database, # Передаем весь список
+    'assets': assets, # Передаем реальный QuerySet (список)
     }
 
-    # 2. Рендерим (смешиваем HTML и данные)
-    # Путь указываем относительно папки templates: 'gallery/index.html'
     return render(request, 'gallery/index.html', context_data)
 
 def about(request):
