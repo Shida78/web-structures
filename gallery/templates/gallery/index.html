@@ -30,8 +30,9 @@
                     -->
 
                     <div class="card-preview">
+                        <!-- Временно оставим текст, пока JS не заменит его на Canvas
                         id="model-container-{{ asset.id }}"
-                        data-url="{{ asset.file.url }}">
+                        data-url="{{ asset.file.url }}">  -->
                         
                         <!-- Временно оставим текст, пока JS не заменит его на Canvas -->
                         �       
@@ -45,14 +46,15 @@
                             <span>📅 {{ asset.created_at|date:"d M Y" }}</span>
                             <!-- Если есть файл, показываем размер -->
                             {% if asset.file %}
-                                <!--<span style="float: right;">💾 {{asset.file.size|filesizeformat }}</span> -->
+                                <span style="float: right;">💾 {{asset.file.size|filesizeformat }}</span>
                             {% endif %}
                         </div>
 
                         <!-- Кнопка скачивания -->
                         {% if asset.file %}
                             <a href="{{ asset.file.url }}" class="btn" download>Скачать.glb</a>
-                            <span>💾 {{asset.file.size|filesizeformat }}</span>
+                            <!-- <span>💾 {{asset.file.size|filesizeformat }}</span> -->
+                            <span style="float: right;">💾 {{asset.file.size|filesizeformat }}</span>
                         {% else %}
                             <span style="color: red;">Файл потерян</span>
                         {% endif %}
