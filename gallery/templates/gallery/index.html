@@ -1,9 +1,22 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>3D Storage</title>
+    <!-- ... ваши старые теги ... -->
+     
+    <!-- ВАЖНО: Это карта, указывающая браузеру, где брать библиотеки -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <!-- Подключение CSS (оставьте как было) -->
+    {% load static %}
     <link rel="stylesheet" href="{% static 'gallery/style.css' %}">
 </head>
 <body>
@@ -13,6 +26,7 @@
         <!-- {{ ... }} — это переменная. Мы передадим её из Python -->
         <h1>{{ page_title }}</h1>
         <!-- Ссылка на загрузку теперь выглядит как кнопка -->
+         {% load static %}
         <a href="{% url 'upload' %}" class="btn" style="background-color: #abf7ab;">Загрузить модель</a>
     </header>
 
