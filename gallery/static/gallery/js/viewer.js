@@ -34,16 +34,18 @@ export function loadModel(containerId, modelUrl) {
     // 3. Загрузка Модели
     const loader = new GLTFLoader();
 
+    let loadedmodel = null; // Создайте переменную
+
     loader.load(
         modelUrl, // URL, который пришел из Django
         (gltf) => {
             // --- SUCCESS ---
-            const model = gltf.scene;
+            loadedmodel = gltf.scene;
 
             // Здесь будет магия центровки (Шаг 2)
-            fitCameraToObject(camera, model, 1.5);
+            fitCameraToObject(camera, loadedmodel, 1.5);
 
-            scene.add(model);
+            scene.add(loadedmodel);
         },
         undefined, // Progress (можно пропустить)
         (error) => {
@@ -56,6 +58,11 @@ export function loadModel(containerId, modelUrl) {
     // 4. Анимация (Loop)
     function animate() {
         requestAnimationFrame(animate);
+
+        if (loadedmodel) {
+            loadedmodel.rotation.y += 0.005;
+        }
+
         renderer.render(scene, camera);
         // Можно добавить медленное вращение всей сцены или только модели
         // scene.rotation.y += 0.005;
