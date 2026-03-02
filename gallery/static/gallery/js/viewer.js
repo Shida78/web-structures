@@ -3,6 +3,10 @@
 import * as THREE from 'three';
 // Подключаем "грузчика" для формата GLB
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+// И нам понадобится PMREMGenerator (преобразует окружение в карту света)
+// Он уже встроен в THREE, импортировать отдельно не надо.
 
 // 2. Экспортируем главную функцию
 // Она принимает ID HTML-элемента, в который нужно вставить 3D
@@ -23,13 +27,37 @@ export function loadModel(containerId, modelUrl) {
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // 2. Свет (ВАЖНО! Без него модель будет черной)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1); // Мягкий свет
-    scene.add(ambientLight);
+    // --- ДОБАВЛЯЕМ УПРАВЛЕНИЕ ---
+    const controls = new OrbitControls(camera, renderer.domElement);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 2); // Солнце
-    dirLight.position.set(5, 10, 7);
-    scene.add(dirLight);
+    // Включаем инерцию (damping), чтобы вращение было плавным, как в Sketchfab
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    // Ограничиваем зум (чтобы не улететь сквозь модель)
+    controls.minDistance = 0.1;
+
+    // 2. Свет (ВАЖНО! Без него модель будет черной)
+    //const ambientLight = new THREE.AmbientLight(0xffffff, 1); // Мягкий свет
+    //scene.add(ambientLight);
+
+    //const dirLight = new THREE.DirectionalLight(0xffffff, 2); // Солнце
+    //dirLight.position.set(5, 10, 7);
+    //scene.add(dirLight);
+
+    // --- НОВЫЙ PRO СВЕТ ---
+    // PMREMGenerator генерирует карту окружения из сцены
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    pmremGenerator.compileEquirectangularShader();
+
+    // Создаем нейтральную "комнату"
+    const roomEnvironment = new RoomEnvironment();
+
+    // Говорим сцене: "Используй эту комнату как источник света и отражений"
+    scene.environment = pmremGenerator.fromScene(roomEnvironment).texture;
+    
+    // Опционально: Можно сделать фон прозрачным или цветным
+    // scene.background = new THREE.Color(0xeeeeee);
+    // Если хотите прозрачность, уберите scene.background и добавьте alpha: true в рендерер
 
     // 3. Загрузка Модели
     const loader = new GLTFLoader();
@@ -59,9 +87,12 @@ export function loadModel(containerId, modelUrl) {
     function animate() {
         requestAnimationFrame(animate);
 
-        if (loadedmodel) {
-            loadedmodel.rotation.y += 0.005;
-        }
+        // ОБЯЗАТЕЛЬНО: Обновляем контроллер в каждом кадре
+        controls.update();
+            // Авто-вращение можно убрать или оставить по желанию.
+            // Если оставить, оно будет конфликтовать с мышкой.
+            // Давайте пока закомментируем авто-вращение:
+        //if (loadedmodel) loadedmodel.rotation.y += 0.005;
 
         renderer.render(scene, camera);
         // Можно добавить медленное вращение всей сцены или только модели
