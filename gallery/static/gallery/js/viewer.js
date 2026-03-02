@@ -16,7 +16,7 @@ export function loadModel(containerId, modelUrl) {
 
     // 1. Стандартная настройка сцены (как в прошлый раз)
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf5f5f5); // Цвет фона под карточку
+    //scene.background = new THREE.Color(0xf5f5f5); // Цвет фона под карточку
 
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
 
@@ -57,6 +57,8 @@ export function loadModel(containerId, modelUrl) {
     
     // Опционально: Можно сделать фон прозрачным или цветным
     // scene.background = new THREE.Color(0xeeeeee);
+    
+    scene.background = null;
     // Если хотите прозрачность, уберите scene.background и добавьте alpha: true в рендерер
 
     // 3. Загрузка Модели

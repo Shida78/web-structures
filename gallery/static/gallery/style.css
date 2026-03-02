@@ -46,6 +46,8 @@ header {
     justify-content: center;
     color: #888;
     font-size: 3rem;
+    background: radial-gradient(circle, #ffffff,
+#e0e0e0);
 }
 
 .card-info {

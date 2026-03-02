@@ -1,1 +1,9 @@
 venv\
+
+config/
+
+gallery/__pycache__/
+
+gallery/migrations/
+
+venv/
