@@ -22,6 +22,18 @@ export function loadModel(containerId, modelUrl) {
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
+    //renderer.setPixelRatio(window.devicePixelRatio);
+
+    // --- ВАЖНЫЕ НАСТРОЙКИ ЦВЕТА ---
+    // 1. Говорим, что текстуры и свет должны быть конвертированы под монитор
+    //renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    // 2. Включаем Tone Mapping (как в кино)
+    // ACESFilmic - это стандарт индустрии (Unreal Engine использует его же)
+    //renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+    // 3. Настраиваем экспозицию (яркость)
+    //renderer.toneMappingExposure = 1.0;
 
     // Очищаем контейнер от текста "Wait..." и вставляем Canvas
     container.innerHTML = '';
