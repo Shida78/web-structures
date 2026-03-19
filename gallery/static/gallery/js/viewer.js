@@ -22,18 +22,18 @@ export function loadModel(containerId, modelUrl) {
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
-    //renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(window.devicePixelRatio);
 
     // --- ВАЖНЫЕ НАСТРОЙКИ ЦВЕТА ---
     // 1. Говорим, что текстуры и свет должны быть конвертированы под монитор
-    //renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     // 2. Включаем Tone Mapping (как в кино)
     // ACESFilmic - это стандарт индустрии (Unreal Engine использует его же)
-    //renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
     // 3. Настраиваем экспозицию (яркость)
-    //renderer.toneMappingExposure = 1.0;
+    renderer.toneMappingExposure = 1.0;
 
     // Очищаем контейнер от текста "Wait..." и вставляем Canvas
     container.innerHTML = '';
@@ -73,27 +73,79 @@ export function loadModel(containerId, modelUrl) {
     scene.background = null;
     // Если хотите прозрачность, уберите scene.background и добавьте alpha: true в рендерер
 
-    // 3. Загрузка Модели
+    // // 3. Загрузка Модели
+    // const loader = new GLTFLoader();
+
+    // let loadedmodel = null; // Создайте переменную
+
+    // loader.load(
+    //     modelUrl, // URL, который пришел из Django
+    //     (gltf) => {
+    //         // --- SUCCESS ---
+    //         loadedmodel = gltf.scene;
+
+    //         // Здесь будет магия центровки (Шаг 2)
+    //         fitCameraToObject(camera, loadedmodel, 1.5);
+
+    //         scene.add(loadedmodel);
+    //     },
+    //     undefined, // Progress (можно пропустить)
+    //     (error) => {
+    //         // --- ERROR ---
+    //         console.error('Ошибка загрузки:', error);
+    //         container.innerHTML = '❌ Error';
+    //     }
+    // );
+
+        //ПРАКТИКА 10
+    // --- 1. Генерируем HTML лоадера программно ---
+    const loaderDiv = document.createElement('div');
+    loaderDiv.className = 'loader-overlay';
+    loaderDiv.innerHTML = `
+        <div style="color: #666; font-size: 0.9rem;">Loading...</div>
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+    `;
+    container.appendChild(loaderDiv);
+
+    // Находим полоску, чтобы менять её ширину
+    const progressFill = loaderDiv.querySelector('.progress-fill');
+
+    // --- 2. Обновляем вызов загрузчика ---
     const loader = new GLTFLoader();
 
-    let loadedmodel = null; // Создайте переменную
-
     loader.load(
-        modelUrl, // URL, который пришел из Django
+        modelUrl,
+
+        // A. ON LOAD (Успех)
         (gltf) => {
-            // --- SUCCESS ---
-            loadedmodel = gltf.scene;
+            const model = gltf.scene;
+            fitCameraToObject(camera, model, controls);
+            scene.add(model);
 
-            // Здесь будет магия центровки (Шаг 2)
-            fitCameraToObject(camera, loadedmodel, 1.5);
-
-            scene.add(loadedmodel);
+            // Скрываем лоадер
+            loaderDiv.style.opacity = '0';
+            setTimeout(() => {
+                loaderDiv.remove(); // Удаляем из DOM через 0.3 сек
+            }, 300);
         },
-        undefined, // Progress (можно пропустить)
+
+        // B. ON PROGRESS (Прогресс)
+        (xhr) => {
+            // xhr.total - общий вес файла в байтах
+            // xhr.loaded - сколько скачалось
+            if (xhr.total > 0) {
+                const percent = (xhr.loaded / xhr.total) * 100;
+                progressFill.style.width = percent + '%';
+            }
+        },
+
+        // C. ON ERROR (Ошибка)
         (error) => {
-            // --- ERROR ---
             console.error('Ошибка загрузки:', error);
-            container.innerHTML = '❌ Error';
+            loaderDiv.innerHTML = `<div class="error-msg">❌ Ошибка загрузки<br>
+<small>Проверьте файл</small></div>`;
         }
     );
 
