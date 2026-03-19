@@ -11,18 +11,30 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 // 2. Экспортируем главную функцию
 // Она принимает ID HTML-элемента, в который нужно вставить 3D
 export function loadModel(containerId, modelUrl) {
+    console.log("🚀 loadModel ВЫЗВАНА для контейнера:", containerId);
+    console.log("🔗 URL модели:", modelUrl);
     const container = document.getElementById(containerId);
     if (!container) return;
 
     // 1. Стандартная настройка сцены (как в прошлый раз)
     const scene = new THREE.Scene();
     //scene.background = new THREE.Color(0xf5f5f5); // Цвет фона под карточку
+    
+    // Тестовый красный куб для проверки рендеринга
+    const testCube = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshStandardMaterial({ color: 0xff0000 })
+    );
+    testCube.position.set(0, 1, 0);
+    scene.add(testCube);
+    console.log("🔴 Тестовый куб добавлен");
 
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+    console.log("✅ Canvas создан, размер:", container.clientWidth, "x", container.clientHeight);
 
     // --- ВАЖНЫЕ НАСТРОЙКИ ЦВЕТА ---
     // 1. Говорим, что текстуры и свет должны быть конвертированы под монитор
@@ -124,11 +136,18 @@ export function loadModel(containerId, modelUrl) {
             fitCameraToObject(camera, model, controls);
             scene.add(model);
 
+            container.style.backgroundImage = 'none';
+            container.style.backgroundColor = '#f0f0f0'; // Опционально
+
             // Скрываем лоадер
             loaderDiv.style.opacity = '0';
             setTimeout(() => {
                 loaderDiv.remove(); // Удаляем из DOM через 0.3 сек
             }, 300);
+            console.log("✅✅✅ МОДЕЛЬ УСПЕШНО ЗАГРУЖЕНА!");
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3());
+            console.log("📐 Размеры модели:", size.x, size.y, size.z);
         },
 
         // B. ON PROGRESS (Прогресс)
@@ -146,7 +165,9 @@ export function loadModel(containerId, modelUrl) {
             console.error('Ошибка загрузки:', error);
             loaderDiv.innerHTML = `<div class="error-msg">❌ Ошибка загрузки<br>
 <small>Проверьте файл</small></div>`;
+            console.error("❌ ОШИБКА ЗАГРУЗКИ:", error);
         }
+        
     );
 
     // 4. Анимация (Loop)
@@ -175,6 +196,7 @@ export function loadModel(containerId, modelUrl) {
 }
 
 function fitCameraToObject(camera, object, offset = 1.25) {
+    console.log("📍 Позиция камеры:", camera.position.x, camera.position.y, camera.position.z);
     // 1. Вычисляем Bounding Box (коробку, в которую влезает модель)
     const boundingBox = new THREE.Box3();
     boundingBox.setFromObject(object);
