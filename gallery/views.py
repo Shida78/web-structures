@@ -1,6 +1,8 @@
 import base64
 from django.core.files.base import ContentFile # Обертка для сохранения файлов
 from django.shortcuts import render, redirect # Добавляем redirect
+from django.db.models import Q # Импортируем Q-object для сложного поиска
+
 from .models import Asset
 from .forms import AssetForm # Импортируем нашу новую форму
 
@@ -49,15 +51,34 @@ def about(request):
 
 # request — это "письмо" от браузера с данными о пользователе
 def home(request):
-   # ORM Запрос: "Дай мне все объекты Asset из базы"
-   # order_by('-created_at') сортирует по полю created_at.
-    # Минус (-) означает "по убыванию" (DESC).
-    assets = Asset.objects.all().order_by('-created_at')
-    #assets = Asset.objects.all()
+    # 1. Получаем параметры из URL (GET-запроса)
+    # Если параметра нет, вернет None (или пустую строку, если мы так настроили)
+    search_query = request.GET.get('q', '')
+    ordering = request.GET.get('ordering', 'new') # По умолчанию 'new'
 
+    # 2. Базовый запрос: Берем ВСЕ
+    assets = Asset.objects.all()
+
+    # 3. Применяем поиск (если пользователь что-то ввел)
+    if search_query:
+        # icontains = Case Insensitive Contains (содержит, без учета регистра)
+        # Если бы у нас было поле 'description', мы бы использовали Q:
+        # assets = assets.filter(Q(title__icontains=search_query) | Q(description__icontains=search_query))
+        assets = assets.filter(title__icontains=search_query)
+
+    # 4. Применяем сортировку
+    if ordering == 'old':
+        assets = assets.order_by('created_at') # От старых к новым
+    elif ordering == 'name':
+        assets = assets.order_by('title') # По алфавиту
+    else:
+        # По умолчанию (new) - свежие сверху
+        assets = assets.order_by('-created_at')
+
+    # 5. Отдаем результат
     context_data = {
-    'page_title': 'Главная Галерея',
-    'assets': assets, # Передаем реальный QuerySet (список)
+        'page_title': 'Главная Галерея',
+        'assets': assets,
     }
 
     return render(request, 'gallery/index.html', context_data)
