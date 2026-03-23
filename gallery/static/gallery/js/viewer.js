@@ -215,4 +215,6 @@ function fitCameraToObject(camera, object, controls, offset = 1.25) {
     }
     
     console.log("📍 Камера настроена: z =", cameraZ.toFixed(2));
+
+    //Новый текст для пула
 }
