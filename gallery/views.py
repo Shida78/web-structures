@@ -3,6 +3,8 @@ from django.core.files.base import ContentFile # Обертка для сохр�
 from django.shortcuts import render, redirect # Добавляем redirect
 from django.db.models import Q # Импортируем Q-object для сложного поиска
 
+from django.core.paginator import Paginator # Вместо того чтобы отдавать все модели, мы будем отдавать только кусочек.
+
 from .models import Asset
 from .forms import AssetForm # Импортируем нашу новую форму
 
@@ -75,10 +77,18 @@ def home(request):
         # По умолчанию (new) - свежие сверху
         assets = assets.order_by('-created_at')
 
+    # --- ПАГИНАЦИЯ (Новый код) ---
+    # Режем список по 8 штук на страницу (для теста, чтобы быстрее увидеть кнопки)
+    paginator = Paginator(assets, 9)
+    # Получаем номер страницы из URL (например, ?page=2)
+    page_number = request.GET.get('page')
+    # Получаем конкретный кусочек данных (объект Page)
+    page_obj = paginator.get_page(page_number)
+
     # 5. Отдаем результат
     context_data = {
         'page_title': 'Главная Галерея',
-        'assets': assets,
+        'page_obj': page_obj,
     }
 
     return render(request, 'gallery/index.html', context_data)
