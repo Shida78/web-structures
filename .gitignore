@@ -1,1 +1,7 @@
 venv\
+
+gallery/__pycache__/
+
+gallery/migrations/
+
+venv/
