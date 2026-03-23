@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect # Добавляем redirect
 from django.db.models import Q # Импортируем Q-object для сложного поиска
 
 from django.core.paginator import Paginator # Вместо того чтобы отдавать все модели, мы будем отдавать только кусочек.
+from django.contrib import messages
 
 from .models import Asset
 from .forms import AssetForm # Импортируем нашу новую форму
@@ -37,6 +38,9 @@ def upload(request):
             # 3. Финальное сохранение в БД
             new_asset.save()
 
+            # ДОБАВЛЯЕМ СООБЩЕНИЕ
+            messages.success(request, f'Модель "{new_asset.title}" успешно загружена!')
+            
             return redirect('home')
     else:
         form = AssetForm()
