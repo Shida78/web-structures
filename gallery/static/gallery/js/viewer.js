@@ -1,130 +1,100 @@
 // 1. Импортируем Three.js по имени из Import Map
-
 import * as THREE from 'three';
 // Подключаем "грузчика" для формата GLB
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-// И нам понадобится PMREMGenerator (преобразует окружение в карту света)
-// Он уже встроен в THREE, импортировать отдельно не надо.
 
 // 2. Экспортируем главную функцию
 // Она принимает ID HTML-элемента, в который нужно вставить 3D
 export function loadModel(containerId, modelUrl) {
     console.log("🚀 loadModel ВЫЗВАНА для контейнера:", containerId);
     console.log("🔗 URL модели:", modelUrl);
+    
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // 1. Стандартная настройка сцены (как в прошлый раз)
+    // 1. Стандартная настройка сцены
     const scene = new THREE.Scene();
-    //scene.background = new THREE.Color(0xf5f5f5); // Цвет фона под карточку
     
-    // Тестовый красный куб для проверки рендеринга
+    // ✅ ИСПРАВЛЕНИЕ: Явный цвет фона сцены
+    scene.background = new THREE.Color(0xf0f0f0);
+
+    // Тестовый красный куб для проверки рендеринга (можно убрать после отладки)
     const testCube = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshStandardMaterial({ color: 0xff0000 })
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshStandardMaterial({ color: 0xff0000 })
     );
     testCube.position.set(0, 1, 0);
     scene.add(testCube);
     console.log("🔴 Тестовый куб добавлен");
 
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(0, 0, 5);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    // ✅ ИСПРАВЛЕНИЕ: alpha: false — отключаем прозрачность канваса
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    console.log("✅ Canvas создан, размер:", container.clientWidth, "x", container.clientHeight);
-
-    // --- ВАЖНЫЕ НАСТРОЙКИ ЦВЕТА ---
-    // 1. Говорим, что текстуры и свет должны быть конвертированы под монитор
+    
+    // --- НАСТРОЙКИ ЦВЕТА ---
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-    // 2. Включаем Tone Mapping (как в кино)
-    // ACESFilmic - это стандарт индустрии (Unreal Engine использует его же)
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-
-    // 3. Настраиваем экспозицию (яркость)
     renderer.toneMappingExposure = 1.0;
+    
+    // ✅ ИСПРАВЛЕНИЕ: Стили для канваса, чтобы он не перекрывался
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.position = 'relative';
+    renderer.domElement.style.zIndex = '1';
 
-    // Очищаем контейнер от текста "Wait..." и вставляем Canvas
+    // Очищаем контейнер и вставляем Canvas
     container.innerHTML = '';
+    container.style.position = 'relative'; // Для позиционирования лоадера
     container.appendChild(renderer.domElement);
 
-    // --- ДОБАВЛЯЕМ УПРАВЛЕНИЕ ---
+    // --- УПРАВЛЕНИЕ ---
     const controls = new OrbitControls(camera, renderer.domElement);
-
-    // Включаем инерцию (damping), чтобы вращение было плавным, как в Sketchfab
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    // Ограничиваем зум (чтобы не улететь сквозь модель)
     controls.minDistance = 0.1;
+    controls.maxDistance = 100;
 
-    // 2. Свет (ВАЖНО! Без него модель будет черной)
-    //const ambientLight = new THREE.AmbientLight(0xffffff, 1); // Мягкий свет
-    //scene.add(ambientLight);
-
-    //const dirLight = new THREE.DirectionalLight(0xffffff, 2); // Солнце
-    //dirLight.position.set(5, 10, 7);
-    //scene.add(dirLight);
-
-    // --- НОВЫЙ PRO СВЕТ ---
-    // PMREMGenerator генерирует карту окружения из сцены
+    // --- СВЕТ И ОКРУЖЕНИЕ ---
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     pmremGenerator.compileEquirectangularShader();
 
-    // Создаем нейтральную "комнату"
     const roomEnvironment = new RoomEnvironment();
-
-    // Говорим сцене: "Используй эту комнату как источник света и отражений"
-    scene.environment = pmremGenerator.fromScene(roomEnvironment).texture;
+    const envTexture = pmremGenerator.fromScene(roomEnvironment).texture;
     
-    // Опционально: Можно сделать фон прозрачным или цветным
-    // scene.background = new THREE.Color(0xeeeeee);
-    
-    scene.background = null;
-    // Если хотите прозрачность, уберите scene.background и добавьте alpha: true в рендерер
+    // ✅ Окружение только для освещения и отражений (не для фона)
+    scene.environment = envTexture;
+    // scene.background уже задан цветом выше
 
-    // // 3. Загрузка Модели
-    // const loader = new GLTFLoader();
-
-    // let loadedmodel = null; // Создайте переменную
-
-    // loader.load(
-    //     modelUrl, // URL, который пришел из Django
-    //     (gltf) => {
-    //         // --- SUCCESS ---
-    //         loadedmodel = gltf.scene;
-
-    //         // Здесь будет магия центровки (Шаг 2)
-    //         fitCameraToObject(camera, loadedmodel, 1.5);
-
-    //         scene.add(loadedmodel);
-    //     },
-    //     undefined, // Progress (можно пропустить)
-    //     (error) => {
-    //         // --- ERROR ---
-    //         console.error('Ошибка загрузки:', error);
-    //         container.innerHTML = '❌ Error';
-    //     }
-    // );
-
-        //ПРАКТИКА 10
-    // --- 1. Генерируем HTML лоадера программно ---
+    // --- ЛОАДЕР (интерфейс загрузки) ---
     const loaderDiv = document.createElement('div');
     loaderDiv.className = 'loader-overlay';
+    loaderDiv.style.cssText = `
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: rgba(240, 240, 240, 0.9);
+        z-index: 10;
+        transition: opacity 0.3s ease;
+    `;
     loaderDiv.innerHTML = `
-        <div style="color: #666; font-size: 0.9rem;">Loading...</div>
-        <div class="progress-bar">
-            <div class="progress-fill"></div>
+        <div style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">Loading...</div>
+        <div class="progress-bar" style="width: 200px; height: 4px; background: #ddd; border-radius: 2px;">
+            <div class="progress-fill" style="width: 0%; height: 100%; background: #4CAF50; border-radius: 2px; transition: width 0.1s;"></div>
         </div>
     `;
     container.appendChild(loaderDiv);
-
-    // Находим полоску, чтобы менять её ширину
     const progressFill = loaderDiv.querySelector('.progress-fill');
 
-    // --- 2. Обновляем вызов загрузчика ---
+    // --- ЗАГРУЗКА МОДЕЛИ ---
     const loader = new GLTFLoader();
 
     loader.load(
@@ -133,27 +103,45 @@ export function loadModel(containerId, modelUrl) {
         // A. ON LOAD (Успех)
         (gltf) => {
             const model = gltf.scene;
-            fitCameraToObject(camera, model, controls);
-            scene.add(model);
+            
+            // ✅ ИСПРАВЛЕНИЕ: Обработка материалов для корректной прозрачности
+            model.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    const materials = Array.isArray(child.material) ? child.material : [child.material];
+                    materials.forEach(mat => {
+                        if (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) {
+                            mat.envMapIntensity = 1.0;
+                            if (mat.transparent) {
+                                mat.depthWrite = false;
+                                mat.side = THREE.DoubleSide;
+                            }
+                        }
+                    });
+                }
+            });
 
-            container.style.backgroundImage = 'none';
-            container.style.backgroundColor = '#f0f0f0'; // Опционально
+            // Центрируем камеру на модели
+            fitCameraToObject(camera, model, controls, 1.5);
+            
+            // Убираем тестовый куб, если модель загрузилась
+            scene.remove(testCube);
+            
+            scene.add(model);
 
             // Скрываем лоадер
             loaderDiv.style.opacity = '0';
             setTimeout(() => {
-                loaderDiv.remove(); // Удаляем из DOM через 0.3 сек
+                loaderDiv.remove();
             }, 300);
+            
             console.log("✅✅✅ МОДЕЛЬ УСПЕШНО ЗАГРУЖЕНА!");
             const box = new THREE.Box3().setFromObject(model);
             const size = box.getSize(new THREE.Vector3());
-            console.log("📐 Размеры модели:", size.x, size.y, size.z);
+            console.log("📐 Размеры модели:", size.x.toFixed(2), size.y.toFixed(2), size.z.toFixed(2));
         },
 
         // B. ON PROGRESS (Прогресс)
         (xhr) => {
-            // xhr.total - общий вес файла в байтах
-            // xhr.loaded - сколько скачалось
             if (xhr.total > 0) {
                 const percent = (xhr.loaded / xhr.total) * 100;
                 progressFill.style.width = percent + '%';
@@ -162,72 +150,69 @@ export function loadModel(containerId, modelUrl) {
 
         // C. ON ERROR (Ошибка)
         (error) => {
-            console.error('Ошибка загрузки:', error);
-            loaderDiv.innerHTML = `<div class="error-msg">❌ Ошибка загрузки<br>
-<small>Проверьте файл</small></div>`;
-            console.error("❌ ОШИБКА ЗАГРУЗКИ:", error);
+            console.error('❌ Ошибка загрузки:', error);
+            loaderDiv.innerHTML = `
+                <div style="color: #d32f2f; text-align: center;">
+                    ❌ Ошибка загрузки<br>
+                    <small style="color: #666;">Проверьте путь к файлу</small>
+                </div>`;
+            loaderDiv.style.background = 'rgba(255, 240, 240, 0.95)';
         }
-        
     );
 
     // 4. Анимация (Loop)
     function animate() {
         requestAnimationFrame(animate);
-
-        // ОБЯЗАТЕЛЬНО: Обновляем контроллер в каждом кадре
         controls.update();
-            // Авто-вращение можно убрать или оставить по желанию.
-            // Если оставить, оно будет конфликтовать с мышкой.
-            // Давайте пока закомментируем авто-вращение:
-        //if (loadedmodel) loadedmodel.rotation.y += 0.005;
-
         renderer.render(scene, camera);
-        // Можно добавить медленное вращение всей сцены или только модели
-        // scene.rotation.y += 0.005;
     }
     animate();
 
-    // Resize handler (как в прошлый раз)
-    window.addEventListener('resize', () => {
+    // Resize handler
+    function onResize() {
+        if (!container) return;
         camera.aspect = container.clientWidth / container.clientHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(container.clientWidth, container.clientHeight);
-    });
+    }
+    window.addEventListener('resize', onResize);
+    
+    // Вызов onResize сразу на случай, если контейнер изменился
+    onResize();
 }
 
-function fitCameraToObject(camera, object, offset = 1.25) {
-    console.log("📍 Позиция камеры:", camera.position.x, camera.position.y, camera.position.z);
-    // 1. Вычисляем Bounding Box (коробку, в которую влезает модель)
-    const boundingBox = new THREE.Box3();
-    boundingBox.setFromObject(object);
+// Функция центрирования камеры на объекте
+function fitCameraToObject(camera, object, controls, offset = 1.25) {
+    // 1. Вычисляем Bounding Box
+    const boundingBox = new THREE.Box3().setFromObject(object);
 
-    // 2. Находим центр этой коробки и её размер
+    // 2. Находим центр и размер
     const center = boundingBox.getCenter(new THREE.Vector3());
     const size = boundingBox.getSize(new THREE.Vector3());
 
-    // 3. Самая длинная сторона модели (чтобы точно влезла)
+    // 3. Самая длинная сторона
     const maxDim = Math.max(size.x, size.y, size.z);
 
-    // 4. Смещаем саму модель так, чтобы её центр стал в 0,0,0
-    // Вместо того чтобы двигать камеру за моделью, проще притянуть модель к центру мира
+    // 4. Центрируем модель в (0, 0, 0)
     object.position.x = -center.x;
-    object.position.y = -center.y; // Теперь модель стоит на "полу" центра
+    object.position.y = -center.y;
     object.position.z = -center.z;
 
-    // 5. Отодвигаем камеру назад
-    // Немного тригонометрии: вычисляем дистанцию в зависимости от угла обзора (FOV)
+    // 5. Вычисляем дистанцию камеры
     const fov = camera.fov * (Math.PI / 180);
     let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-
-    // Умножаем на коэффициент (offset), чтобы модель не упиралась в края экрана
     cameraZ *= offset;
 
-    // Устанавливаем камеру
-    camera.position.set(0, maxDim * 0.5, cameraZ); // Чуть выше центра
-
-    // Камера должна смотреть в центр мира (где теперь стоит модель)
+    // 6. Позиционируем камеру
+    camera.position.set(0, maxDim * 0.3, cameraZ);
     camera.lookAt(0, 0, 0);
-
-    // Обновляем параметры камеры
     camera.updateProjectionMatrix();
+
+    // 7. Обновляем контроллеры
+    if (controls) {
+        controls.target.set(0, 0, 0);
+        controls.update();
+    }
+    
+    console.log("📍 Камера настроена: z =", cameraZ.toFixed(2));
 }
