@@ -20,6 +20,8 @@ from django.urls import path
 from gallery.views import home
 from gallery.views import about
 from gallery.views import upload
+from django.views.static import serve  # ← Новый импорт
+from django.urls import re_path        # ← Новый импорт
 
 # Импорты для настройки медиа
 from django.conf import settings
@@ -36,3 +38,11 @@ urlpatterns = [
 # ВНИМАНИЕ: Эта магия работает только если DEBUG = True (режим разработки)
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# ⚠️ ДОБАВЬТЕ ЭТО — для отладки при DEBUG=False (НЕ для настоящего продакшена!)
+#if not settings.DEBUG:
+#    urlpatterns += [
+#        re_path(r'^media/(?P<path>.*)$', serve, {
+#            'document_root': settings.MEDIA_ROOT,
+#        }),
+#    ]

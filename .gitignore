@@ -1,7 +1,17 @@
-venv\
+# Python
+__pycache__/
+*.py[cod]
 
-gallery/__pycache__/
+# Django
+db.sqlite3
+local_settings.py
 
-gallery/migrations/
-
+# Environment (САМОЕ ВАЖНОЕ: не слейте пароли!)
+.env
 venv/
+
+# Media (Пользовательские файлы не храним в Git, они тяжелые)
+media/
+
+# Static collection folder
+staticfiles/
